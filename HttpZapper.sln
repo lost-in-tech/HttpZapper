@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpZapper", "src\HttpZapper\HttpZapper.csproj", "{F8B7C83F-9CFC-4B6E-AB16-F0A5956ECA69}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HttpZapper.Tests", "tests\HttpZapper.Tests\HttpZapper.Tests.csproj", "{182381C2-4DF3-41DC-9E63-F2C9EFCD8FEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{F8B7C83F-9CFC-4B6E-AB16-F0A5956ECA69}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8B7C83F-9CFC-4B6E-AB16-F0A5956ECA69}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8B7C83F-9CFC-4B6E-AB16-F0A5956ECA69}.Release|Any CPU.Build.0 = Release|Any CPU
+		{182381C2-4DF3-41DC-9E63-F2C9EFCD8FEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{182381C2-4DF3-41DC-9E63-F2C9EFCD8FEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{182381C2-4DF3-41DC-9E63-F2C9EFCD8FEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{182381C2-4DF3-41DC-9E63-F2C9EFCD8FEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
