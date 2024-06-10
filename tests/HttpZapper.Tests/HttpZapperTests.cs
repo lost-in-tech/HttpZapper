@@ -46,18 +46,23 @@ public class HttpZapperTests : IClassFixture<HttpZapperIocFixture>
                 givenRequest = x.Arg<HttpRequestMessage>();
             });
 
-        var rsp = await sut.Service(TestConstants.ServiceNames.ApiBooks)
+        var sut2 = scope.ServiceProvider.GetRequiredService<IHttpZapper>();
+        
+        var rspTask1 = sut.Service(TestConstants.ServiceNames.ApiBooks)
             .Path("/books")
             .QueryString("test-qs","1")
             .Header("test-h","1")
             .Get<BookDto[]>(CancellationToken.None);
 
-        var sut2 = scope.ServiceProvider.GetRequiredService<IHttpZapper>();
-        var rsp2 = await sut2.Service(TestConstants.ServiceNames.ApiBooks)
+        var rspTask2 = sut2.Service(TestConstants.ServiceNames.ApiBooks)
             .Path("/books")
             .QueryString("test-qs","1")
-            .Header("test-h","1")
             .Get<BookDto[]>(CancellationToken.None);
+
+        await Task.WhenAll(rspTask1, rspTask2);
+
+        var rsp = rspTask1.Result;
+        var rsp2 = rspTask2.Result;
 
         rsp.ShouldNotBeNull();
         rsp.IsSuccessStatusCode.ShouldBeTrue();

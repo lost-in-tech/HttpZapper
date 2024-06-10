@@ -33,6 +33,11 @@ public record HttpMsgRequest
     /// Override service policy for this request
     /// </summary>
     public ServicePolicy? Policy { get; init; }
+    
+    /// <summary>
+    /// If you need to pass specific serializer for this request. e.g its an xml or need to support specific type. But you want to apply only for this request.
+    /// </summary>
+    public IHttpMessageSerializer? Serializer { get; init; }
 }
 
 public record HttpMsgRequest<T> : HttpMsgRequest

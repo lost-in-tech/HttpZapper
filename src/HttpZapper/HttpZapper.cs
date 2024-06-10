@@ -131,8 +131,10 @@ internal sealed class HttpZapper(
     {
         var msg = BuildRequestMessage(request, service);
 
-        msg.Content = new StringContent(serializer.Serialize(request.Content),
-            Encoding.UTF8, serializer.MediaType);
+        var currentSerializer = request.Serializer ?? serializer;
+        
+        msg.Content = new StringContent(currentSerializer.Serialize(request.Content),
+            Encoding.UTF8, currentSerializer.MediaType);
 
         return msg;
     }
@@ -146,17 +148,19 @@ internal sealed class HttpZapper(
 
         var content = default(TResponse);
 
+        var currentSerializer = request.Serializer ?? serializer;
+        
         if (isSuccessStatusCode)
         {
             await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
 
-            content = await serializer.Deserialize<TResponse>(sr, ct);
+            content = await currentSerializer.Deserialize<TResponse>(sr, ct);
         }
         else if (request.OnFailure != null)
         {
             await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
 
-            await request.OnFailure.Invoke(rsp.StatusCode, sr, serializer, ct);
+            await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
         }
 
         return new HttpMsgResponse<TResponse>
