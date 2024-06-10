@@ -15,7 +15,7 @@ internal sealed class HttpZapper(
 
         using var msg = BuildRequestMessage(request, settings);
 
-        var rsp = await http.Send(msg, settings, request.ServiceName, ct);
+        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
 
         return await BuildResponseMessage(request, rsp, ct);
     }
@@ -28,7 +28,7 @@ internal sealed class HttpZapper(
 
         using var msg = BuildRequestMessageWithContent(request, settings);
 
-        var rsp = await http.Send(msg, settings, request.ServiceName, ct);
+        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
 
         return await BuildResponseMessage(request, rsp, ct);
     }
@@ -41,7 +41,7 @@ internal sealed class HttpZapper(
 
         using var msg = BuildRequestMessageWithContent(request, settings);
 
-        var rsp = await http.Send(msg, settings, request.ServiceName, ct);
+        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
 
         return await BuildResponseMessageWithContent<TResponse>(request, rsp, ct);
     }
@@ -54,7 +54,7 @@ internal sealed class HttpZapper(
 
         using var msg = BuildRequestMessage(request, settings);
 
-        var rsp = await http.Send(msg, settings, request.ServiceName, ct);
+        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
 
         return await BuildResponseMessageWithContent<TResponse>(request, rsp, ct);
     }

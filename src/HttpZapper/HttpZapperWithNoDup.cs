@@ -5,6 +5,7 @@ namespace HttpZapper;
 internal sealed class HttpZapperWithNoDup(HttpZapper http) : IHttpZapper
 {
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    private readonly ConcurrentDictionary<string, object> _data = new();
     
     public Task<HttpMsgResponse> Send(HttpMsgRequest request, CancellationToken ct)
     {
@@ -32,13 +33,21 @@ internal sealed class HttpZapperWithNoDup(HttpZapper http) : IHttpZapper
 
     private async Task<HttpMsgResponse> SendWithLock(HttpMsgRequest request, CancellationToken ct)
     {
-        var semaphoreSlim = GetSemaphoreSlim(request);
+        var key = BuildKey(request);
+
+        if (_data.TryGetValue(key, out var value)) return (HttpMsgResponse)value;
+        
+        var semaphoreSlim = GetSemaphoreSlim(key);
 
         await semaphoreSlim.WaitAsync(ct);
 
         try
         {
-            return await http.Send(request, ct);
+            var rsp = await http.Send(request, ct);
+
+            _data.AddOrUpdate(key, _ => rsp, (_, _) => rsp);
+            
+            return rsp;
         }
         finally
         {
@@ -48,13 +57,21 @@ internal sealed class HttpZapperWithNoDup(HttpZapper http) : IHttpZapper
     
     private async Task<HttpMsgResponse<TResponse>> SendWithLock<TResponse>(HttpMsgRequest request, CancellationToken ct)
     {
-        var semaphoreSlim = GetSemaphoreSlim(request);
+        var key = BuildKey(request);
+
+        if (_data.TryGetValue(key, out var value)) return (HttpMsgResponse<TResponse>)value;
+        
+        var semaphoreSlim = GetSemaphoreSlim(key);
 
         await semaphoreSlim.WaitAsync(ct);
 
         try
         {
-            return await http.Send<TResponse>(request, ct);
+            var rsp = await http.Send<TResponse>(request, ct);
+            
+            _data.AddOrUpdate(key, _ => rsp, (_, _) => rsp);
+
+            return rsp;
         }
         finally
         {
@@ -65,10 +82,10 @@ internal sealed class HttpZapperWithNoDup(HttpZapper http) : IHttpZapper
     private bool ShouldSkipDuplicateCheck(HttpMsgRequest request)
         => request.SkipDuplicateCheck || request.Method != HttpMethod.Get;
     
-    private SemaphoreSlim GetSemaphoreSlim(HttpMsgRequest request)
+    private string BuildKey(HttpMsgRequest request) => $"{request.Method}:{request.ServiceName}:{request.Path}";
+    
+    private SemaphoreSlim GetSemaphoreSlim(string key)
     {
-        var key = $"{request.Method}:{request.ServiceName}:{request.Path}";
-        
         return _locks.GetOrAdd(key, s => new SemaphoreSlim(1, 1));
     }
 }

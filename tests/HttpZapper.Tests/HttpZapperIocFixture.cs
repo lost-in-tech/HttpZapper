@@ -8,7 +8,7 @@ namespace HttpZapper.Tests;
 
 public class HttpZapperIocFixture
 {
-    private IServiceProvider _sp;
+    private readonly IServiceProvider _sp;
 
     public HttpZapperIocFixture()
     {
