@@ -182,9 +182,11 @@ internal sealed class HttpZapper(
         if (!isSuccessStatusCode
             && request.OnFailure != null)
         {
+            var currentSerializer = request.Serializer ?? serializer;
+            
             await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
 
-            await request.OnFailure.Invoke(rsp.StatusCode, sr, serializer, ct);
+            await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
         }
 
         return new HttpMsgResponse
