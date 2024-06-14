@@ -1,199 +1,91 @@
-using System.Text;
+using System.Collections.Concurrent;
 
 namespace HttpZapper;
 
-internal sealed class HttpZapper(
-    IServiceSettings serviceSettings,
-    IHttpMessageSerializer serializer,
-    HttpClientWithResiliency http)
+internal sealed class HttpZapper(HttpZapperWithSerializer http) : IHttpZapper
 {
-    public async Task<HttpMsgResponse> Send(
-        HttpMsgRequest request, 
-        CancellationToken ct = default)
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
+    private readonly ConcurrentDictionary<string, object> _data = new();
+    
+    public Task<HttpMsgResponse> Send(HttpMsgRequest request, CancellationToken ct)
     {
-        var settings = await GetServiceSettings(request, ct);
-
-        using var msg = BuildRequestMessage(request, settings);
-
-        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
-
-        return await BuildResponseMessage(request, rsp, ct);
+        return ShouldSkipDuplicateCheck(request) 
+            ? http.Send(request, ct) 
+            : SendWithLock(request, ct);
     }
 
-    public async Task<HttpMsgResponse> Send<TRequest>(
-        HttpMsgRequest<TRequest> request, 
-        CancellationToken ct = default)
+    public Task<HttpMsgResponse> Send<TRequest>(HttpMsgRequest<TRequest> request, CancellationToken ct)
     {
-        var settings = await GetServiceSettings(request, ct);
-
-        using var msg = BuildRequestMessageWithContent(request, settings);
-
-        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
-
-        return await BuildResponseMessage(request, rsp, ct);
+        return http.Send(request, ct);
     }
 
-    public async Task<HttpMsgResponse<TResponse>> Send<TRequest, TResponse>(
-        HttpMsgRequest<TRequest> request,
-        CancellationToken ct = default)
+    public Task<HttpMsgResponse<TResponse>> Send<TRequest, TResponse>(HttpMsgRequest<TRequest> request, CancellationToken ct)
     {
-        var settings = await GetServiceSettings(request, ct);
-
-        using var msg = BuildRequestMessageWithContent(request, settings);
-
-        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
-
-        return await BuildResponseMessageWithContent<TResponse>(request, rsp, ct);
+        return http.Send<TRequest,TResponse>(request, ct);
     }
 
-    public async Task<HttpMsgResponse<TResponse>> Send<TResponse>(
-        HttpMsgRequest request,
-        CancellationToken ct = default)
+    public Task<HttpMsgResponse<TResponse>> Send<TResponse>(HttpMsgRequest request, CancellationToken ct)
     {
-        var settings = await GetServiceSettings(request, ct);
-
-        using var msg = BuildRequestMessage(request, settings);
-
-        var rsp = await http.Send(msg, settings, request.PolicyKey, ct);
-
-        return await BuildResponseMessageWithContent<TResponse>(request, rsp, ct);
+        return ShouldSkipDuplicateCheck(request) 
+            ? http.Send<TResponse>(request, ct) 
+            : SendWithLock<TResponse>(request, ct);
     }
 
-    private async ValueTask<ServiceSettings?> GetServiceSettings(
-        HttpMsgRequest request, 
-        CancellationToken ct)
+    private async Task<HttpMsgResponse> SendWithLock(HttpMsgRequest request, CancellationToken ct)
     {
-        ServiceSettings? settings = await serviceSettings.Get(request.ServiceName, ct);
+        var key = BuildKey(request);
 
-        if (request.Policy == null
-            || (request.Policy.RetryPolicy == null
-                && request.Policy.TimeoutPolicy == null
-                && request.Policy.CircuitBreakerPolicy == null)) return settings;
-
-        if (settings == null)
-        {
-            return new ServiceSettings
-            {
-                Name = request.ServiceName,
-                BaseUrl = string.Empty,
-                Policy = request.Policy
-            };
-        }
-
-        return settings with
-        {
-            Policy = new ServicePolicy
-            {
-                RetryPolicy = request.Policy?.RetryPolicy ?? settings.Policy?.RetryPolicy,
-                TimeoutPolicy = request.Policy?.TimeoutPolicy ?? settings.Policy?.TimeoutPolicy,
-                CircuitBreakerPolicy = request.Policy?.CircuitBreakerPolicy ?? settings?.Policy?.CircuitBreakerPolicy
-            }
-        };
-    }
-
-    private IEnumerable<(string Name, string Value)> ReadResponseHeaders(HttpResponseMessage msg)
-    {
-        foreach (var (key, values) in msg.Headers)
-        {
-            var value = string.Join(",", values);
-
-            yield return (Name: key, Value: value);
-        }
-    }
-
-
-    private HttpRequestMessage BuildRequestMessage(
-        HttpMsgRequest request, 
-        ServiceSettings? service)
-    {
-        var baseUrl = request.BaseUrl;
-
-        if (string.IsNullOrWhiteSpace(baseUrl)) baseUrl = service?.BaseUrl;
-
-        var msg = new HttpRequestMessage(request.Method, $"{baseUrl}/{request.Path.TrimStart('/')}");
-
-        if (request.Headers != null)
-        {
-            foreach (var header in request.Headers)
-            {
-                if (header.Value == null) continue;
-
-                msg.Headers.Add(header.Name, header.Value);
-            }
-        }
-
-        return msg;
-    }
-
-    private HttpRequestMessage BuildRequestMessageWithContent<TRequest>(
-        HttpMsgRequest<TRequest> request,
-        ServiceSettings? service)
-    {
-        var msg = BuildRequestMessage(request, service);
-
-        var currentSerializer = request.Serializer ?? serializer;
+        if (_data.TryGetValue(key, out var value)) return (HttpMsgResponse)value;
         
-        msg.Content = new StringContent(currentSerializer.Serialize(request.Content),
-            Encoding.UTF8, currentSerializer.MediaType);
+        var semaphoreSlim = GetSemaphoreSlim(key);
 
-        return msg;
-    }
+        await semaphoreSlim.WaitAsync(ct);
 
-    private async Task<HttpMsgResponse<TResponse>> BuildResponseMessageWithContent<TResponse>(
-        HttpMsgRequest request,
-        HttpResponseMessage rsp, 
-        CancellationToken ct)
-    {
-        var isSuccessStatusCode = rsp.IsSuccessStatusCode;
-
-        var content = default(TResponse);
-
-        var currentSerializer = request.Serializer ?? serializer;
-        
-        if (isSuccessStatusCode)
+        try
         {
-            await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
+            var rsp = await http.Send(request, ct);
 
-            content = await currentSerializer.Deserialize<TResponse>(sr, ct);
-        }
-        else if (request.OnFailure != null)
-        {
-            await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
-
-            await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
-        }
-
-        return new HttpMsgResponse<TResponse>
-        {
-            Headers = ReadResponseHeaders(rsp).ToArray(),
-            IsSuccessStatusCode = isSuccessStatusCode,
-            StatusCode = rsp.StatusCode,
-            Content = content
-        };
-    }
-
-    private async ValueTask<HttpMsgResponse> BuildResponseMessage(
-        HttpMsgRequest request,
-        HttpResponseMessage rsp,
-        CancellationToken ct)
-    {
-        var isSuccessStatusCode = rsp.IsSuccessStatusCode;
-
-        if (!isSuccessStatusCode
-            && request.OnFailure != null)
-        {
-            var currentSerializer = request.Serializer ?? serializer;
+            _data.AddOrUpdate(key, _ => rsp, (_, _) => rsp);
             
-            await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
-
-            await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
+            return rsp;
         }
-
-        return new HttpMsgResponse
+        finally
         {
-            Headers = ReadResponseHeaders(rsp).ToArray(),
-            IsSuccessStatusCode = isSuccessStatusCode,
-            StatusCode = rsp.StatusCode
-        };
+            semaphoreSlim.Release();
+        }
+    }
+    
+    private async Task<HttpMsgResponse<TResponse>> SendWithLock<TResponse>(HttpMsgRequest request, CancellationToken ct)
+    {
+        var key = BuildKey(request);
+
+        if (_data.TryGetValue(key, out var value)) return (HttpMsgResponse<TResponse>)value;
+        
+        var semaphoreSlim = GetSemaphoreSlim(key);
+
+        await semaphoreSlim.WaitAsync(ct);
+
+        try
+        {
+            var rsp = await http.Send<TResponse>(request, ct);
+            
+            _data.AddOrUpdate(key, _ => rsp, (_, _) => rsp);
+
+            return rsp;
+        }
+        finally
+        {
+            semaphoreSlim.Release();
+        }
+    }
+    
+    private bool ShouldSkipDuplicateCheck(HttpMsgRequest request)
+        => request.SkipDuplicateCheck || request.Method != HttpMethod.Get;
+    
+    private string BuildKey(HttpMsgRequest request) => $"{request.Method}:{request.ServiceName}:{request.Path}";
+    
+    private SemaphoreSlim GetSemaphoreSlim(string key)
+    {
+        return _locks.GetOrAdd(key, s => new SemaphoreSlim(1, 1));
     }
 }

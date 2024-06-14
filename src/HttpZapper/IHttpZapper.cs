@@ -25,10 +25,7 @@ public record HttpMsgRequest
     /// Base url should be taken from service settings. If base url provided then we will use this baseurl
     /// </summary>
     public string? BaseUrl { get; init; }
-    /// <summary>
-    /// If you like to customize policy then you need to provide a key for that
-    /// </summary>
-    public string? PolicyKey { get; init; }
+    
     /// <summary>
     /// Override service policy for this request
     /// </summary>

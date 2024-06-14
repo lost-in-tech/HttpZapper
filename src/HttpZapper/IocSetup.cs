@@ -9,10 +9,11 @@ public static class IocSetup
     {
         options ??= new HttpZapperOptions();
         services.AddSingleton<IHttpMessageSerializer, HttpMessageSerializer>();
-        services.AddScoped<HttpZapper>();
+        services.AddScoped<HttpZapperWithSerializer>();
         services.AddScoped<HttpClientWithResiliency>();
         services.AddScoped<IHttpClientWrapper, HttpClientWrapper>();
-        services.AddScoped<IHttpZapper, HttpZapperWithNoDup>();
+        services.AddScoped<IHttpResiliencyPipeline, HttpResiliencyPipeline>();
+        services.AddScoped<IHttpZapper, HttpZapper>();
         services.AddSingleton<IServiceSettings, ConfigBasedServiceSettingsProvider>();
         services.AddLogging();
         var config = new ServiceSettingsConfig();

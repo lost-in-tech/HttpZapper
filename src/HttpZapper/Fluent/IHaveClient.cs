@@ -31,7 +31,7 @@ public interface ICollectPath
     IHavePath Path(string path);
 }
 
-public interface IHavePath : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectPolicyKey, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
+public interface IHavePath : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
 }
 
@@ -41,7 +41,7 @@ public interface ICollectQueryStrings
     IHaveQueryStrings QueryStrings(IEnumerable<(string Name, string? Value)> values);
 }
 
-public interface IHaveQueryStrings : ISendMessage, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectPolicyKey, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
+public interface IHaveQueryStrings : ISendMessage, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
     
 }
@@ -52,7 +52,7 @@ public interface ICollectHeaders
     IHaveHeaders Headers(IEnumerable<(string name, string? value)> values);
 }
 
-public interface IHaveHeaders : ISendMessage, ICollectOnFailure, ICollectDuplicateCheck, ICollectPolicyKey, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
+public interface IHaveHeaders : ISendMessage, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
     
 }
@@ -62,7 +62,7 @@ public interface ICollectOnFailure
     IHaveOnFailure OnFailure(Func<HttpStatusCode, Stream, IHttpMessageSerializer, CancellationToken, Task> onFailure);
 }
 
-public interface IHaveOnFailure : ISendMessage, ICollectDuplicateCheck, ICollectPolicyKey, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
+public interface IHaveOnFailure : ISendMessage, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
 }
 
@@ -71,30 +71,16 @@ public interface ICollectDuplicateCheck
     IHaveSkipDuplicateCheck SkipDuplicateCheck(bool value);
 }
 
-public interface IHaveSkipDuplicateCheck : ISendMessage, ICollectPolicyKey, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
+public interface IHaveSkipDuplicateCheck : ISendMessage, ICollectTimeout, ICollectRetry
 {
 }
 
-public interface ICollectPolicyKey
-{
-    /// <summary>
-    /// Generally for different http method a new policy used. For example for same timeout, retry and circuit-breaker values two different instance
-    /// of policies will be used for GET and POST. But if you like to use same policy for get and post pass policy key
-    /// </summary>
-    /// <param name="key"></param>
-    /// <returns></returns>
-    IHavePolicyKey PolicyKey(string key);
-}
-
-public interface IHavePolicyKey : ISendMessage, ICollectTimeout, ICollectRetry, ICollectCircuitBreaker
-{
-}
 
 public interface ICollectTimeout
 {
     IHaveTimeout Timeout(int timeoutInMs);
 }
-public interface IHaveTimeout : ISendMessage, ICollectRetry, ICollectCircuitBreaker
+public interface IHaveTimeout : ISendMessage, ICollectRetry
 {}
 
 
@@ -104,18 +90,8 @@ public interface ICollectRetry
     IHaveRetry Retry(int retryCount);
 }
 
-public interface IHaveRetry : ISendMessage, ICollectCircuitBreaker
+public interface IHaveRetry : ISendMessage
 {
-}
-
-public interface ICollectCircuitBreaker
-{
-    IHaveCircuitBreaker CircuitBreaker(CircuitBreakerPolicy policy);
-}
-
-public interface IHaveCircuitBreaker : ISendMessage
-{
-    
 }
 
 

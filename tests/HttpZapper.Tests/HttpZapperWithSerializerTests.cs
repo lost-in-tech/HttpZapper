@@ -5,11 +5,11 @@ using Shouldly;
 
 namespace HttpZapper.Tests;
 
-public class HttpZapperTests : IClassFixture<HttpZapperIocFixture>
+public class HttpZapperWithSerializerTests : IClassFixture<HttpZapperIocFixture>
 {
     private readonly HttpZapperIocFixture _fixture;
 
-    public HttpZapperTests(HttpZapperIocFixture fixture)
+    public HttpZapperWithSerializerTests(HttpZapperIocFixture fixture)
     {
         _fixture = fixture;
     }

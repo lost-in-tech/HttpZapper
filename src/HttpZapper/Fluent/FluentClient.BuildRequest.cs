@@ -13,7 +13,6 @@ internal sealed partial class FluentClient
             Method = method,
             Headers = _headers,
             OnFailure = _onFailure,
-            PolicyKey = _policyKey,
             SkipDuplicateCheck = _skipDuplicateCheck ?? false,
             BaseUrl = _baseUrl,
             Policy = BuildPolicy(),
@@ -29,7 +28,6 @@ internal sealed partial class FluentClient
             Method = method,
             Headers = _headers,
             OnFailure = _onFailure,
-            PolicyKey = _policyKey,
             SkipDuplicateCheck = _skipDuplicateCheck ?? false,
             BaseUrl = _baseUrl,
             Policy = BuildPolicy(),
@@ -39,13 +37,12 @@ internal sealed partial class FluentClient
 
     private ServicePolicy? BuildPolicy()
     {
-        if (_retryPolicy == null && _timeoutPolicy == null && _circuitBreakerPolicy == null) return null;
+        if (_retryPolicy == null && _timeoutPolicy == null) return null;
 
         return new ServicePolicy
         {
             RetryPolicy = _retryPolicy,
-            TimeoutPolicy = _timeoutPolicy,
-            CircuitBreakerPolicy = _circuitBreakerPolicy
+            TimeoutPolicy = _timeoutPolicy
         };
     }
 
