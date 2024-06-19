@@ -31,7 +31,16 @@ public interface ICollectPath
     IHavePath Path(string path);
 }
 
-public interface IHavePath : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHavePath : ISendMessage, ICollectVersion, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+{
+}
+
+public interface ICollectVersion
+{
+    IHaveVersion Version(Version version);
+}
+
+public interface IHaveVersion : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
 }
 
@@ -39,9 +48,10 @@ public interface ICollectQueryStrings
 {
     IHaveQueryStrings QueryString(string name, string? value);
     IHaveQueryStrings QueryStrings(IEnumerable<(string Name, string? Value)> values);
+    IHaveQueryStrings QueryStrings<T>(T? value) where T : class;
 }
 
-public interface IHaveQueryStrings : ISendMessage, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveQueryStrings : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
     
 }
@@ -50,9 +60,29 @@ public interface ICollectHeaders
 {
     IHaveHeaders Header(string name, string? value);
     IHaveHeaders Headers(IEnumerable<(string name, string? value)> values);
+
+    IHaveHeaders Cookie(string name, string? value);
+    IHaveHeaders Cookies(IEnumerable<(string name, string? value)> values);
+
+    IHaveHeaders OAuthBearerToken(string token);
+
+    /// <summary>
+    /// create credentials using username and password and base64encode the value and the pass in header
+    /// </summary>
+    /// <param name="username"></param>
+    /// <param name="password"></param>
+    /// <returns></returns>
+    IHaveHeaders BasicAuth(string username, string password);
+    
+    /// <summary>
+    /// pass the credentials.
+    /// </summary>
+    /// <param name="credentials"></param>
+    /// <returns></returns>
+    IHaveHeaders BasicAuth(string credentials);
 }
 
-public interface IHaveHeaders : ISendMessage, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveHeaders : ISendMessage, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
 {
     
 }
@@ -97,22 +127,22 @@ public interface IHaveRetry : ISendMessage
 
 public interface ISendMessage
 {
-    Task<HttpMsgResponse> Get(CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Get<TResponse>(CancellationToken ct);
+    Task<HttpMsgResponse> Get(CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Get<TResponse>(CancellationToken ct = default);
     
     
-    Task<HttpMsgResponse> Delete(CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Delete<TResponse>(CancellationToken ct);
+    Task<HttpMsgResponse> Delete(CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Delete<TResponse>(CancellationToken ct = default);
     
-    Task<HttpMsgResponse> Post(CancellationToken ct);
-    Task<HttpMsgResponse> Post<TRequest>(TRequest request, CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Post<TRequest, TResponse>(TRequest request, CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Post<TResponse>(CancellationToken ct);
+    Task<HttpMsgResponse> Post(CancellationToken ct = default);
+    Task<HttpMsgResponse> Post<TRequest>(TRequest request, CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Post<TRequest, TResponse>(TRequest request, CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Post<TResponse>(CancellationToken ct = default);
     
     
     
-    Task<HttpMsgResponse> Put(CancellationToken ct);
-    Task<HttpMsgResponse> Put<TRequest>(TRequest request, CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Put<TRequest, TResponse>(TRequest request, CancellationToken ct);
-    Task<HttpMsgResponse<TResponse>> Put<TResponse>(CancellationToken ct);
+    Task<HttpMsgResponse> Put(CancellationToken ct = default);
+    Task<HttpMsgResponse> Put<TRequest>(TRequest request, CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Put<TRequest, TResponse>(TRequest request, CancellationToken ct = default);
+    Task<HttpMsgResponse<TResponse>> Put<TResponse>(CancellationToken ct = default);
 }

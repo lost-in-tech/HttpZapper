@@ -1,10 +1,13 @@
-using Microsoft.Extensions.Logging;
-
 namespace HttpZapper;
 
-internal sealed class HttpClientWithResiliency(IHttpClientWrapper clientWrapper, IHttpResiliencyPipeline resiliencyPipeline, ILogger<HttpZapperWithSerializer> logger)
+internal sealed class HttpClientWithResiliency(
+    IHttpClientWrapper clientWrapper, 
+    IHttpResiliencyPipeline resiliencyPipeline)
 {
-    public Task<HttpResponseMessage> Send(HttpRequestMessage msg, ServiceSettings? settings, CancellationToken ct)
+    public Task<HttpResponseMessage> Send(
+        HttpRequestMessage msg, 
+        ServiceSettings? settings, 
+        CancellationToken ct)
     {
         return settings?.Policy == null 
             ? clientWrapper.Send(settings?.Name ?? string.Empty, msg, ct) 

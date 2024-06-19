@@ -35,6 +35,8 @@ public record HttpMsgRequest
     /// If you need to pass specific serializer for this request. e.g its an xml or need to support specific type. But you want to apply only for this request.
     /// </summary>
     public IHttpMessageSerializer? Serializer { get; init; }
+
+    public Version? Version { get; init; }
 }
 
 public record HttpMsgRequest<T> : HttpMsgRequest

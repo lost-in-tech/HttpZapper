@@ -21,4 +21,21 @@ internal sealed partial class FluentClient : IHaveQueryStrings
 
         return this;
     }
+
+    public IHaveQueryStrings QueryStrings<T>(T? value) where T : class
+    {
+        if (value == null) return this;
+        
+        var props = value.GetType().GetProperties().Where(x => x.CanRead).ToArray();
+        
+        var data = new List<(string, string?)>();
+        
+        foreach (var prop in props)
+        {
+            var propValue = prop.GetValue(value);
+            data.Add((prop.Name, propValue?.ToString()));
+        }
+
+        return QueryStrings(data as IEnumerable<(string,string?)>);
+    }
 }

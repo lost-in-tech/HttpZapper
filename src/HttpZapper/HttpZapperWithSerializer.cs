@@ -111,7 +111,9 @@ internal sealed class HttpZapperWithSerializer(
         if (string.IsNullOrWhiteSpace(baseUrl)) baseUrl = service?.BaseUrl;
 
         var msg = new HttpRequestMessage(request.Method, $"{baseUrl}/{request.Path.TrimStart('/')}");
-
+        
+        if(request.Version != null) msg.Version = request.Version;
+        
         if (request.Headers != null)
         {
             foreach (var header in request.Headers)

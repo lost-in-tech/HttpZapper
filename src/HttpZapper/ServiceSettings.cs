@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace HttpZapper;
 
 public record ServiceSettings
@@ -38,16 +40,20 @@ public record TimeoutPolicy
 
 public record CircuitBreakerPolicy
 {
-    public static CircuitBreakerPolicy Default = new CircuitBreakerPolicy
+    public static CircuitBreakerPolicy Default = new()
     {
         FailureRatio = 0.1,
         MinimumThroughput = 100,
-        BreakDurationInSeconds = 5,
-        SamplingDurationInSeconds = 30
+        BreakDurationInMs = 500,
+        SamplingDurationInMs = 3000
     };
     
+    /// <summary>
+    /// Must be a number between 0 and 1. 0.1 means failure ratio is 10%
+    /// </summary>
+    [Range(0,1)]
     public double FailureRatio { get; init; }
-    public int SamplingDurationInSeconds { get; init; }
+    public int SamplingDurationInMs { get; init; }
     public int MinimumThroughput { get; init; }
-    public int BreakDurationInSeconds { get; init; }
+    public int BreakDurationInMs { get; init; }
 }

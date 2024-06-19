@@ -38,8 +38,8 @@ public class HttpZapperIocFixture
                         {
                             FailureRatio = 0.1,
                             MinimumThroughput = 100,
-                            BreakDurationInSeconds = 5,
-                            SamplingDurationInSeconds = 30 
+                            BreakDurationInMs = 500,
+                            SamplingDurationInMs = 3000 
                         }
                     }
                 }

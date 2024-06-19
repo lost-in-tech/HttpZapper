@@ -67,6 +67,8 @@ internal sealed class HttpZapper(HttpZapperWithSerializer http) : IHttpZapper
 
         try
         {
+            if (_data.TryGetValue(key, out var existingValue)) return (HttpMsgResponse<TResponse>)existingValue;
+            
             var rsp = await http.Send<TResponse>(request, ct);
             
             _data.AddOrUpdate(key, _ => rsp, (_, _) => rsp);

@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Net;
+using System.Net.Http.Headers;
+using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
@@ -13,32 +15,37 @@ public interface IHttpResiliencyPipeline
         CancellationToken ct);
 }
 
-internal sealed class HttpResiliencyPipeline(IHttpClientWrapper clientWrapper) : IHttpResiliencyPipeline
+internal sealed class HttpResiliencyPipeline(
+    IHttpClientWrapper clientWrapper,
+    ILogger<HttpResiliencyPipeline> logger)
+    : IHttpResiliencyPipeline
 {
+    const string FailureDesc = "x-failure-desc";
+    
     private static readonly ConcurrentDictionary<string, ResiliencePipeline<HttpResponseMessage>> Store = new();
 
     public async Task<HttpResponseMessage> Execute(ServiceSettings? settings, HttpRequestMessage msg,
         CancellationToken ct)
     {
         var serviceName = settings?.Name ?? string.Empty;
-        
+
         if (settings == null) return await clientWrapper.Send(serviceName, msg, ct);
-        
+
         var cbPolicy = settings.Policy?.CircuitBreakerPolicy;
-        
+
         var cbResiliencyPipeline = cbPolicy == null
             ? ResiliencePipeline<HttpResponseMessage>.Empty
             : Store.GetOrAdd($"{settings.Name}:cb",
                 _ => Build(cbPolicy));
-        
+
         var timeoutPolicy = settings.Policy?.TimeoutPolicy;
-        
-        var timeoutResiliencyPipeline = timeoutPolicy == null
+
+        var timeoutResiliencyPipeline = timeoutPolicy == null || timeoutPolicy.TimeoutInMs == 0
             ? ResiliencePipeline<HttpResponseMessage>.Empty
-                : Build(timeoutPolicy);
-        
+            : Build(timeoutPolicy);
+
         var retryPolicy = settings.Policy?.RetryPolicy;
-        var retryResiliencyPipeline = retryPolicy == null
+        var retryResiliencyPipeline = retryPolicy == null || retryPolicy.RetryCount == 0
             ? ResiliencePipeline<HttpResponseMessage>.Empty
             : Store.GetOrAdd($"{settings.Name}:retry:{retryPolicy.RetryCount}:{retryPolicy.DelayOnRetryInMs}",
                 _ => Build(retryPolicy));
@@ -56,18 +63,30 @@ internal sealed class HttpResiliencyPipeline(IHttpClientWrapper clientWrapper) :
         }
         catch (BrokenCircuitException e)
         {
+            logger.LogError(e.Message, e);
+
             return new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.FailedDependency,
-                ReasonPhrase = "Circuit Failed"
+                ReasonPhrase = "Circuit Failed",
+                Headers =
+                {
+                    { FailureDesc, "Failed because of BrokenCircuitException" }
+                }
             };
         }
         catch (TimeoutRejectedException e)
         {
+            logger.LogError(e.Message, e);
+            
             return new HttpResponseMessage
             {
                 StatusCode = HttpStatusCode.RequestTimeout,
-                ReasonPhrase = "Timeout"
+                ReasonPhrase = "Timeout",
+                Headers = 
+                {
+                    { FailureDesc, "Failed because of TimeoutRejectedException" }
+                }
             };
         }
     }
@@ -101,7 +120,7 @@ internal sealed class HttpResiliencyPipeline(IHttpClientWrapper clientWrapper) :
                 }
             }).Build();
     }
-    
+
     private ResiliencePipeline<HttpResponseMessage> Build(TimeoutPolicy policy)
     {
         return new ResiliencePipelineBuilder<HttpResponseMessage>()
@@ -118,8 +137,8 @@ internal sealed class HttpResiliencyPipeline(IHttpClientWrapper clientWrapper) :
             {
                 FailureRatio = policy.FailureRatio,
                 MinimumThroughput = policy.MinimumThroughput,
-                SamplingDuration = TimeSpan.FromSeconds(policy.SamplingDurationInSeconds),
-                BreakDuration = TimeSpan.FromSeconds(policy.BreakDurationInSeconds),
+                SamplingDuration = TimeSpan.FromMilliseconds(policy.SamplingDurationInMs),
+                BreakDuration = TimeSpan.FromMilliseconds(policy.BreakDurationInMs),
                 ShouldHandle = arg =>
                 {
                     var statusCode = arg.Outcome.Result?.StatusCode;
