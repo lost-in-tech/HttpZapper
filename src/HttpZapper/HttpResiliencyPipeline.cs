@@ -112,11 +112,8 @@ internal sealed class HttpResiliencyPipeline(
 
                     return new ValueTask<bool>(statusCode == HttpStatusCode.InternalServerError
                                                || statusCode == HttpStatusCode.ServiceUnavailable
-                                               || statusCode == HttpStatusCode.BadGateway
                                                || statusCode == HttpStatusCode.GatewayTimeout
-                                               || statusCode == HttpStatusCode.RequestTimeout
-                                               || statusCode == HttpStatusCode.FailedDependency
-                                               || statusCode == HttpStatusCode.TooManyRequests);
+                                               || statusCode == HttpStatusCode.RequestTimeout);
                 }
             }).Build();
     }

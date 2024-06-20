@@ -5,6 +5,7 @@ namespace HttpZapper;
 internal sealed class HttpZapperWithSerializer(
     IServiceSettings serviceSettings,
     IHttpMessageSerializer serializer,
+    IEnumerable<IHttpMsgRequestFilter> filters,
     HttpClientWithResiliency http)
 {
     public async Task<HttpMsgResponse> Send(
@@ -106,6 +107,11 @@ internal sealed class HttpZapperWithSerializer(
         HttpMsgRequest request, 
         ServiceSettings? service)
     {
+        foreach (var filter in filters)
+        {
+            request = filter.Filter(request);
+        }
+        
         var baseUrl = request.BaseUrl;
 
         if (string.IsNullOrWhiteSpace(baseUrl)) baseUrl = service?.BaseUrl;

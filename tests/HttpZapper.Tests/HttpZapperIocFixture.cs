@@ -12,6 +12,13 @@ public class HttpZapperIocFixture
 
     public HttpZapperIocFixture()
     {
+        var sc = BuildServiceCollection();
+        
+        _sp = sc.BuildServiceProvider();
+    }
+
+    public IServiceCollection BuildServiceCollection()
+    {
         var sc = new ServiceCollection();
         var config = new ConfigurationBuilder().Build();
         var sb = Substitute.For<IOptions<ServiceSettingsConfig>>();
@@ -51,8 +58,15 @@ public class HttpZapperIocFixture
         sc.AddScoped<IHttpClientWrapper>(c => Substitute.For<IHttpClientWrapper>());
         sc.RemoveAll<IOptions<ServiceSettingsConfig>>();
         sc.AddScoped<IOptions<ServiceSettingsConfig>>(_ => sb);
-        
-        _sp = sc.BuildServiceProvider();
+
+        return sc;
+    }
+    
+    public async Task WithScope(Func<IServiceProvider, Task> action)
+    {
+        using var scope = _sp.CreateScope();
+
+        await action.Invoke(scope.ServiceProvider);
     }
 
     public IServiceScope Scope() => _sp.CreateScope();

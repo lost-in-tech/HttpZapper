@@ -7,7 +7,8 @@ using Shouldly;
 
 namespace HttpZapper.Tests;
 
-public class HttpZapperNoDupTests(HttpZapperIocFixture fixture) : IClassFixture<HttpZapperIocFixture>
+public class HttpZapperNoDupTests(HttpZapperIocFixture fixture) 
+    : IClassFixture<HttpZapperIocFixture>
 {
     private HttpContent BuildContent()
     {
@@ -42,16 +43,18 @@ public class HttpZapperNoDupTests(HttpZapperIocFixture fixture) : IClassFixture<
                     Content = BuildContent()
                 }, new HttpResponseMessage()
                 {
-                    StatusCode = HttpStatusCode.Created,
+                    StatusCode = HttpStatusCode.OK,
                     Content = BuildContent()
                 },
                 new HttpResponseMessage
                 {
-                    StatusCode = HttpStatusCode.NotAcceptable
+                    StatusCode = HttpStatusCode.OK,
+                    Content = BuildContent()
                 },
                 new HttpResponseMessage
                 {
-                    StatusCode = HttpStatusCode.NotAcceptable
+                    StatusCode = HttpStatusCode.OK,
+                    Content = BuildContent()
                 });
 
 
