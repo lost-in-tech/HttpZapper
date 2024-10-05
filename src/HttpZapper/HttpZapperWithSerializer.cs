@@ -87,7 +87,7 @@ internal sealed class HttpZapperWithSerializer(
             {
                 RetryPolicy = request.Policy?.RetryPolicy ?? settings.Policy?.RetryPolicy,
                 TimeoutPolicy = request.Policy?.TimeoutPolicy ?? settings.Policy?.TimeoutPolicy,
-                CircuitBreakerPolicy = request.Policy?.CircuitBreakerPolicy ?? settings?.Policy?.CircuitBreakerPolicy
+                CircuitBreakerPolicy = request.Policy?.CircuitBreakerPolicy ?? settings.Policy?.CircuitBreakerPolicy
             }
         };
     }
