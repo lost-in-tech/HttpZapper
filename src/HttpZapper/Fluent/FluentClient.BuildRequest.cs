@@ -48,6 +48,7 @@ internal sealed partial class FluentClient
             SkipDuplicateCheck = _skipDuplicateCheck ?? false,
             BaseUrl = _baseUrl,
             Policy = BuildPolicy(),
+            ProblemDetailsType = _problemDetailsType
         };
     }
 
@@ -73,7 +74,8 @@ internal sealed partial class FluentClient
             SkipDuplicateCheck = _skipDuplicateCheck ?? false,
             BaseUrl = _baseUrl,
             Policy = BuildPolicy(),
-            Content = request
+            Content = request,
+            ProblemDetailsType = _problemDetailsType
         };
     }
 

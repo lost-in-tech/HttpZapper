@@ -157,7 +157,8 @@ internal sealed class HttpZapperWithSerializer(
         var content = default(TResponse);
 
         var currentSerializer = request.Serializer ?? serializer;
-        
+
+        object? problemDetails = null;
         if (isSuccessStatusCode)
         {
             await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
@@ -170,13 +171,20 @@ internal sealed class HttpZapperWithSerializer(
 
             await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
         }
+        else if (request.ProblemDetailsType != null)
+        {
+            await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
+
+            problemDetails = serializer.Deserialize(sr, request.ProblemDetailsType, ct);
+        }
 
         return new HttpMsgResponse<TResponse>
         {
             Headers = ReadResponseHeaders(rsp).ToArray(),
             IsSuccessStatusCode = isSuccessStatusCode,
             StatusCode = rsp.StatusCode,
-            Content = content
+            Content = content,
+            ProblemDetails = problemDetails
         };
     }
 
@@ -187,6 +195,7 @@ internal sealed class HttpZapperWithSerializer(
     {
         var isSuccessStatusCode = rsp.IsSuccessStatusCode;
 
+        object? problemDetails = null;
         if (!isSuccessStatusCode
             && request.OnFailure != null)
         {
@@ -196,12 +205,19 @@ internal sealed class HttpZapperWithSerializer(
 
             await request.OnFailure.Invoke(rsp.StatusCode, sr, currentSerializer, ct);
         }
+        else if (request.ProblemDetailsType != null)
+        {
+            await using var sr = await rsp.Content.ReadAsStreamAsync(ct);
+
+            problemDetails = serializer.Deserialize(sr, request.ProblemDetailsType, ct);
+        }
 
         return new HttpMsgResponse
         {
             Headers = ReadResponseHeaders(rsp).ToArray(),
             IsSuccessStatusCode = isSuccessStatusCode,
-            StatusCode = rsp.StatusCode
+            StatusCode = rsp.StatusCode,
+            ProblemDetails = problemDetails
         };
     }
 }

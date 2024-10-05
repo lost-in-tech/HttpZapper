@@ -8,13 +8,14 @@ internal sealed partial class FluentClient(IHttpZapper http) :
     IHaveBaseUrl,
     IHavePath, 
     IHaveOnFailure,
-    IHaveSkipDuplicateCheck
+    IHaveSkipDuplicateCheck,
+    IHaveProblemDetailsType
 {
     private string _serviceName = string.Empty;
     private string _path = string.Empty;
     private Func<HttpStatusCode, Stream, IHttpMessageSerializer, CancellationToken, Task>? _onFailure = null;
     private bool? _skipDuplicateCheck = null;
-    
+    private Type? _problemDetailsType = null;
     
     public IHaveServiceName ForService(string name)
     {
@@ -46,6 +47,16 @@ internal sealed partial class FluentClient(IHttpZapper http) :
     public IHaveBaseUrl BaseUrl(string baseUrl)
     {
         _baseUrl = baseUrl;
+        return this;
+    }
+
+    public IHaveProblemDetailsType ProblemDetailsType<T>() 
+        => ProblemDetailsType(typeof(T));
+
+    public IHaveProblemDetailsType ProblemDetailsType(Type type)
+    {
+        _problemDetailsType = type;
+
         return this;
     }
 }

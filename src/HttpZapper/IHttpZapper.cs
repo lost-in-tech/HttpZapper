@@ -37,6 +37,8 @@ public record HttpMsgRequest
     public IHttpMessageSerializer? Serializer { get; init; }
 
     public Version? Version { get; init; }
+    
+    public Type? ProblemDetailsType { get; init; }
 }
 
 public record HttpMsgRequest<T> : HttpMsgRequest
@@ -49,6 +51,7 @@ public record HttpMsgResponse
     public bool IsSuccessStatusCode { get; init; }
     public HttpStatusCode StatusCode { get; init; }
     public required (string Name, string Value)[] Headers { get; init; }
+    public object? ProblemDetails { get; init; }
 }
 
 public record HttpMsgResponse<T> : HttpMsgResponse

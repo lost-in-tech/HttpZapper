@@ -31,7 +31,16 @@ public interface ICollectPath
     IHavePath Path(string path);
 }
 
-public interface IHavePath : ISendMessage, ICollectVersion, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHavePath 
+    : ISendMessage, 
+    ICollectVersion, 
+    ICollectQueryStrings, 
+    ICollectHeaders, 
+    ICollectOnFailure, 
+    ICollectProblemDetailsType, 
+    ICollectDuplicateCheck, 
+    ICollectTimeout, 
+    ICollectRetry
 {
 }
 
@@ -40,7 +49,14 @@ public interface ICollectVersion
     IHaveVersion Version(Version version);
 }
 
-public interface IHaveVersion : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveVersion : ISendMessage, 
+    ICollectQueryStrings, 
+    ICollectHeaders, 
+    ICollectOnFailure, 
+    ICollectProblemDetailsType, 
+    ICollectDuplicateCheck, 
+    ICollectTimeout, 
+    ICollectRetry
 {
 }
 
@@ -51,7 +67,14 @@ public interface ICollectQueryStrings
     IHaveQueryStrings QueryStrings<T>(T? value) where T : class;
 }
 
-public interface IHaveQueryStrings : ISendMessage, ICollectQueryStrings, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveQueryStrings : ISendMessage, 
+    ICollectQueryStrings, 
+    ICollectHeaders, 
+    ICollectOnFailure, 
+    ICollectProblemDetailsType, 
+    ICollectDuplicateCheck, 
+    ICollectTimeout, 
+    ICollectRetry
 {
     
 }
@@ -82,7 +105,13 @@ public interface ICollectHeaders
     IHaveHeaders BasicAuth(string credentials);
 }
 
-public interface IHaveHeaders : ISendMessage, ICollectHeaders, ICollectOnFailure, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveHeaders : ISendMessage, 
+    ICollectHeaders, 
+    ICollectOnFailure, 
+    ICollectProblemDetailsType, 
+    ICollectDuplicateCheck, 
+    ICollectTimeout, 
+    ICollectRetry
 {
     
 }
@@ -92,8 +121,22 @@ public interface ICollectOnFailure
     IHaveOnFailure OnFailure(Func<HttpStatusCode, Stream, IHttpMessageSerializer, CancellationToken, Task> onFailure);
 }
 
-public interface IHaveOnFailure : ISendMessage, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+public interface IHaveOnFailure : ISendMessage, 
+    ICollectDuplicateCheck, 
+    ICollectTimeout, 
+    ICollectRetry
 {
+}
+
+public interface ICollectProblemDetailsType
+{
+    IHaveProblemDetailsType ProblemDetailsType<T>();
+    IHaveProblemDetailsType ProblemDetailsType(Type type);
+}
+
+public interface IHaveProblemDetailsType : ISendMessage, ICollectDuplicateCheck, ICollectTimeout, ICollectRetry
+{
+    
 }
 
 public interface ICollectDuplicateCheck

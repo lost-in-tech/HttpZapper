@@ -7,6 +7,7 @@ public interface IHttpMessageSerializer
 {
     string Serialize<T>(T? value);
     ValueTask<T?> Deserialize<T>(Stream stream, CancellationToken ct);
+    ValueTask<object?> Deserialize(Stream stream, Type type, CancellationToken ct);
     string MediaType { get; }
 }
 
@@ -32,6 +33,11 @@ internal sealed class HttpMessageSerializer : IHttpMessageSerializer
     public ValueTask<T?> Deserialize<T>(Stream stream, CancellationToken ct)
     {
         return JsonSerializer.DeserializeAsync<T>(stream, _options, ct);
+    }
+
+    public ValueTask<object?> Deserialize(Stream stream, Type type, CancellationToken ct)
+    {
+        return JsonSerializer.DeserializeAsync(stream, type, _options, ct);
     }
 
     public string MediaType => "application/json";
