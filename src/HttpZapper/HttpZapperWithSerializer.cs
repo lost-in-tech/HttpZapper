@@ -195,9 +195,18 @@ internal sealed class HttpZapperWithSerializer(
     {
         var isSuccessStatusCode = rsp.IsSuccessStatusCode;
 
+        if (isSuccessStatusCode)
+        {
+            return new HttpMsgResponse
+            {
+                Headers = ReadResponseHeaders(rsp).ToArray(),
+                IsSuccessStatusCode = isSuccessStatusCode,
+                StatusCode = rsp.StatusCode
+            };
+        }
+        
         object? problemDetails = null;
-        if (!isSuccessStatusCode
-            && request.OnFailure != null)
+        if (request.OnFailure != null)
         {
             var currentSerializer = request.Serializer ?? serializer;
             
