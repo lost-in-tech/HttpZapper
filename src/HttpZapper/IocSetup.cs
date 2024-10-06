@@ -16,9 +16,8 @@ public static class IocSetup
         services.AddScoped<IHttpZapper, HttpZapper>();
         services.AddSingleton<IServiceSettings, ConfigBasedServiceSettingsProvider>();
         services.AddLogging();
-        var config = new ServiceSettingsConfig();
-        configuration.GetSection(options.ServiceSettingsSectionName).Bind(config);
-
+        services.Configure<ServiceSettingsConfig>(configuration.GetSection(options.ServiceSettingsSectionName));
+        
         return services;
     }
 }
