@@ -24,9 +24,9 @@ public class HttpZapperIocFixture
         var sb = Substitute.For<IOptions<ServiceSettingsConfig>>();
         sb.Value.Returns(new ServiceSettingsConfig
         {
-            Services = new Dictionary<string, ServiceSettings>
-            {
-                [TestConstants.ServiceNames.ApiBooks] = new()
+            Services =
+            [
+                new()
                 {
                     Name = TestConstants.ServiceNames.ApiBooks,
                     BaseUrl = "http://api-books.prod.com.au",
@@ -50,7 +50,7 @@ public class HttpZapperIocFixture
                         }
                     }
                 }
-            }
+            ]
         });
 
         sc.AddHttpZapper(config);

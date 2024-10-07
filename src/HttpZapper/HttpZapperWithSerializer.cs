@@ -3,7 +3,7 @@ using System.Text;
 namespace HttpZapper;
 
 internal sealed class HttpZapperWithSerializer(
-    IServiceSettings serviceSettings,
+    IServiceSettingsProvider serviceSettings,
     IHttpMessageSerializer serializer,
     IEnumerable<IHttpMsgRequestFilter> filters,
     HttpClientWithResiliency http)

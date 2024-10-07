@@ -14,7 +14,7 @@ public static class IocSetup
         services.AddScoped<IHttpClientWrapper, HttpClientWrapper>();
         services.AddScoped<IHttpResiliencyPipeline, HttpResiliencyPipeline>();
         services.AddScoped<IHttpZapper, HttpZapper>();
-        services.AddSingleton<IServiceSettings, ConfigBasedServiceSettingsProvider>();
+        services.AddSingleton<IServiceSettingsProvider, ConfigBasedServiceSettingsProvider>();
         services.AddLogging();
         services.Configure<ServiceSettingsConfig>(configuration.GetSection(options.ServiceSettingsSectionName));
         
